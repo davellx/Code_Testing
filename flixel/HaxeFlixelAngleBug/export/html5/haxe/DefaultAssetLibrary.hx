@@ -30,7 +30,6 @@ class DefaultAssetLibrary extends AssetLibrary {
 	public static var path (default, null) = new Map <String, String> ();
 	public static var type (default, null) = new Map <String, AssetType> ();
 	
-	
 	public function new () {
 		
 		super ();
@@ -41,61 +40,108 @@ class DefaultAssetLibrary extends AssetLibrary {
 		type.set ("assets/images/images-go-here.txt", Reflect.field (AssetType, "text".toUpperCase ()));
 		className.set ("assets/images/triangle.png", __ASSET__assets_images_triangle_png);
 		type.set ("assets/images/triangle.png", Reflect.field (AssetType, "image".toUpperCase ()));
+		className.set ("assets/sounds/beep.mp3", __ASSET__assets_sounds_beep_mp3);
+		type.set ("assets/sounds/beep.mp3", Reflect.field (AssetType, "music".toUpperCase ()));
+		className.set ("assets/sounds/flixel.mp3", __ASSET__assets_sounds_flixel_mp3);
+		type.set ("assets/sounds/flixel.mp3", Reflect.field (AssetType, "music".toUpperCase ()));
+		className.set ("assets/sounds/beep.ogg", __ASSET__assets_sounds_beep_ogg);
+		type.set ("assets/sounds/beep.ogg", Reflect.field (AssetType, "sound".toUpperCase ()));
+		className.set ("assets/sounds/flixel.ogg", __ASSET__assets_sounds_flixel_ogg);
+		type.set ("assets/sounds/flixel.ogg", Reflect.field (AssetType, "sound".toUpperCase ()));
 		
 		
 		#elseif html5
 		
 		addExternal("assets/images/images-go-here.txt", "text", "assets/images/images-go-here.txt");
 		addExternal("assets/images/triangle.png", "image", "assets/images/triangle.png");
+		addExternal("assets/sounds/beep.mp3", "music", "assets/sounds/beep.mp3");
+		addExternal("assets/sounds/flixel.mp3", "music", "assets/sounds/flixel.mp3");
+		addExternal("assets/sounds/beep.ogg", "sound", "assets/sounds/beep.ogg");
+		addExternal("assets/sounds/flixel.ogg", "sound", "assets/sounds/flixel.ogg");
 		
 		
 		#else
 		
-		try {
-			
-			#if blackberry
-			var bytes = ByteArray.readFile ("app/native/manifest");
-			#elseif tizen
-			var bytes = ByteArray.readFile ("../res/manifest");
-			#elseif emscripten
-			var bytes = ByteArray.readFile ("assets/manifest");
-			#else
-			var bytes = ByteArray.readFile ("manifest");
-			#end
-			
-			if (bytes != null) {
+		#if (windows || mac || linux)
+		
+		var loadManifest = false;
+		
+		className.set ("assets/images/images-go-here.txt", __ASSET__assets_images_images_go_here_txt);
+		type.set ("assets/images/images-go-here.txt", Reflect.field (AssetType, "text".toUpperCase ()));
+		
+		className.set ("assets/images/triangle.png", __ASSET__assets_images_triangle_png);
+		type.set ("assets/images/triangle.png", Reflect.field (AssetType, "image".toUpperCase ()));
+		
+		className.set ("assets/sounds/beep.mp3", __ASSET__assets_sounds_beep_mp3);
+		type.set ("assets/sounds/beep.mp3", Reflect.field (AssetType, "music".toUpperCase ()));
+		
+		className.set ("assets/sounds/flixel.mp3", __ASSET__assets_sounds_flixel_mp3);
+		type.set ("assets/sounds/flixel.mp3", Reflect.field (AssetType, "music".toUpperCase ()));
+		
+		className.set ("assets/sounds/beep.ogg", __ASSET__assets_sounds_beep_ogg);
+		type.set ("assets/sounds/beep.ogg", Reflect.field (AssetType, "sound".toUpperCase ()));
+		
+		className.set ("assets/sounds/flixel.ogg", __ASSET__assets_sounds_flixel_ogg);
+		type.set ("assets/sounds/flixel.ogg", Reflect.field (AssetType, "sound".toUpperCase ()));
+		
+		
+		#else
+		
+		var loadManifest = true;
+		
+		#end
+		
+		if (loadManifest) {
+			try {
 				
-				bytes.position = 0;
+				#if blackberry
+				var bytes = ByteArray.readFile ("app/native/manifest");
+				#elseif tizen
+				var bytes = ByteArray.readFile ("../res/manifest");
+				#elseif emscripten
+				var bytes = ByteArray.readFile ("assets/manifest");
+				#else
+				var bytes = ByteArray.readFile ("manifest");
+				#end
 				
-				if (bytes.length > 0) {
+				if (bytes != null) {
 					
-					var data = bytes.readUTFBytes (bytes.length);
+					bytes.position = 0;
 					
-					if (data != null && data.length > 0) {
+					if (bytes.length > 0) {
 						
-						var manifest:Array<AssetData> = Unserializer.run (data);
+						var data = bytes.readUTFBytes (bytes.length);
 						
-						for (asset in manifest) {
+						if (data != null && data.length > 0) {
 							
-							path.set (asset.id, asset.path);
-							type.set (asset.id, asset.type);
+							var manifest:Array<AssetData> = Unserializer.run (data);
 							
+							for (asset in manifest) {
+								
+								if (!className.exists(asset.id)) {
+									
+									path.set (asset.id, asset.path);
+									type.set (asset.id, asset.type);
+									
+								}
+							}
+						
 						}
-						
-					}
 					
+					}
+				
+				} else {
+				
+					trace ("Warning: Could not load asset manifest");
+				
 				}
-				
-			} else {
-				
+			
+			} catch (e:Dynamic) {
+			
 				trace ("Warning: Could not load asset manifest");
-				
+			
 			}
-			
-		} catch (e:Dynamic) {
-			
-			trace ("Warning: Could not load asset manifest");
-			
+		
 		}
 		
 		#end
@@ -178,7 +224,7 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		return BitmapData.fromImage (path.get (id));
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), BitmapData);
 		
@@ -192,7 +238,8 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return BitmapData.load (path.get (id));
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), BitmapData);
+		else return BitmapData.load (path.get (id));
 		
 		#end
 		
@@ -205,7 +252,7 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		return null;
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), ByteArray);
 		
@@ -245,7 +292,8 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return ByteArray.readFile (path.get (id));
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), ByteArray);
+		else return ByteArray.readFile (path.get (id));
 		
 		#end
 		
@@ -264,7 +312,11 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return new Font (path.get (id));
+		if (className.exists(id)) {
+			var fontClass = className.get(id);
+			Font.registerFont(fontClass);
+			return cast (Type.createInstance (fontClass, []), Font);
+		} else return new Font (path.get (id));
 		
 		#end
 		
@@ -277,7 +329,7 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		return null;
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), Sound);
 		
@@ -294,7 +346,8 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return new Sound (new URLRequest (path.get (id)), null, true);
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), Sound);
+		else return new Sound (new URLRequest (path.get (id)), null, true);
 		
 		#end
 		
@@ -322,7 +375,7 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		return null;
 		
-		#elseif flash
+		#elseif (flash)
 		
 		return cast (Type.createInstance (className.get (id), []), Sound);
 		
@@ -332,7 +385,8 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#else
 		
-		return new Sound (new URLRequest (path.get (id)), null, type.get (id) == MUSIC);
+		if (className.exists(id)) return cast (Type.createInstance (className.get (id), []), Sound);
+		else return new Sound (new URLRequest (path.get (id)), null, type.get (id) == MUSIC);
 		
 		#end
 		
@@ -359,7 +413,7 @@ class DefaultAssetLibrary extends AssetLibrary {
 			bytes = null;
 			
 		}
-
+		
 		if (bytes != null) {
 			
 			bytes.position = 0;
@@ -614,12 +668,31 @@ class DefaultAssetLibrary extends AssetLibrary {
 
 @:keep class __ASSET__assets_images_images_go_here_txt extends null { }
 @:keep class __ASSET__assets_images_triangle_png extends flash.display.BitmapData { public function new () { super (0, 0, true, 0); } }
+@:keep class __ASSET__assets_sounds_beep_mp3 extends null { }
+@:keep class __ASSET__assets_sounds_flixel_mp3 extends null { }
+@:keep class __ASSET__assets_sounds_beep_ogg extends null { }
+@:keep class __ASSET__assets_sounds_flixel_ogg extends null { }
 
 
 #elseif html5
 
 
 
+
+
+
+
+
+
+#elseif (windows || mac || linux)
+
+
+@:file("assets/images/images-go-here.txt") class __ASSET__assets_images_images_go_here_txt extends flash.utils.ByteArray {}
+@:bitmap("assets/images/triangle.png") class __ASSET__assets_images_triangle_png extends flash.display.BitmapData {}
+@:sound("C:/HaxeToolkit/haxe/lib/flixel/3,3,3/assets/sounds/beep.mp3") class __ASSET__assets_sounds_beep_mp3 extends flash.media.Sound {}
+@:sound("C:/HaxeToolkit/haxe/lib/flixel/3,3,3/assets/sounds/flixel.mp3") class __ASSET__assets_sounds_flixel_mp3 extends flash.media.Sound {}
+@:sound("C:/HaxeToolkit/haxe/lib/flixel/3,3,3/assets/sounds/beep.ogg") class __ASSET__assets_sounds_beep_ogg extends flash.media.Sound {}
+@:sound("C:/HaxeToolkit/haxe/lib/flixel/3,3,3/assets/sounds/flixel.ogg") class __ASSET__assets_sounds_flixel_ogg extends flash.media.Sound {}
 
 
 #end
