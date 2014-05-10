@@ -23,13 +23,13 @@ class MenuState extends FlxState
 		var spr1 = new FlxSprite(10,10);
 		spr1.loadGraphic("assets/images/triangle.png");
 		add(spr1);
-		MouseEventManager.addSprite(spr1, null, null, onOver, onOut);
+		MouseEventManager.add(spr1, null, null, onOver, onOut);
 		
 		var spr2 = new FlxSprite(120, 10);
 		spr2.loadGraphic("assets/images/triangle.png");
 		spr2.angle = 1;
 		add(spr2);
-		MouseEventManager.addSprite(spr2, null, null, onOver, onOut);
+		MouseEventManager.add(spr2, null, null, onOver, onOut);
 	}
 	
 	function onOut(spr:FlxSprite) 
